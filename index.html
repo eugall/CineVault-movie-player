@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cinevault - Premium Player</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    /* RESET & THEME */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --card: #1a1a26;
+      --accent: #e8b84b;
+      --accent2: #c0392b;
+      --text: #f0ece0;
+      --muted: #6b6880;
+      --border: #2a2a3a;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.4;
+    }
+
+    /* FIXED HEADER */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 24px 40px 16px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 1000;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-icon svg { width: 20px; height: 20px; fill: var(--bg); }
+
+    header h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem;
+      letter-spacing: 3px;
+      color: var(--text);
+    }
+
+    header h1 span { color: var(--accent); }
+
+    .header-badge {
+      margin-left: auto;
+      font-size: 0.65rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    /* MAIN CONTAINER */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px 60px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* STICKY PLAYER SECTION */
+    .sticky-player-area {
+      position: sticky;
+      top: 80px; /* Aligns below the header */
+      background: var(--bg);
+      z-index: 900;
+      padding-top: 32px;
+      padding-bottom: 20px;
+    }
+
+    .now-playing-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+
+    .now-playing-label::before {
+      content: '';
+      display: block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent2);
+      box-shadow: 0 0 8px var(--accent2);
+      animation: pulse 1.4s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+    }
+
+    .video-wrapper video {
+      width: 100%;
+      aspect-ratio: 16/9;
+      display: block;
+      background: #000;
+    }
+
+    .movie-info {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 0 0;
+    }
+
+    .movie-info-left h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.9rem;
+      letter-spacing: 2px;
+      line-height: 1;
+      color: var(--text);
+    }
+
+    .movie-info-left .meta {
+      margin-top: 6px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .badge {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    /* SCROLLABLE PLAYLIST SECTION */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 20px 0 16px;
+    }
+
+    .divider span {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1rem;
+      letter-spacing: 3px;
+      color: var(--muted);
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .playlist {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .playlist-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .playlist-item:hover {
+      background: #1f1f2e;
+      transform: translateX(4px);
+    }
+
+    .playlist-item.active {
+      background: #1e1c2e;
+      border-color: rgba(232,184,75,0.5);
+    }
+
+    .item-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.3rem;
+      color: var(--border);
+      width: 28px;
+      text-align: center;
+    }
+
+    .playlist-item.active .item-num { display: none; }
+    .play-icon { display: none; }
+    .playlist-item.active .play-icon { display: block; }
+
+    .play-icon svg {
+      width: 18px;
+      height: 18px;
+      fill: var(--accent);
+    }
+
+    .item-thumb-placeholder {
+      width: 80px;
+      height: 46px;
+      background: var(--surface);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+    }
+
+    .item-thumb-placeholder svg { width: 20px; height: 20px; fill: var(--muted); opacity: 0.4; }
+
+    .item-info { flex: 1; min-width: 0; }
+    .item-title { font-size: 0.9rem; font-weight: 500; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .playlist-item.active .item-title { color: var(--accent); }
+    .item-meta { font-size: 0.73rem; color: var(--muted); margin-top: 3px; }
+    .item-duration { font-size: 0.75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+    footer {
+      text-align: center;
+      padding: 40px 0 24px;
+      font-size: 0.72rem;
+      color: var(--border);
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-icon">
+    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+  </div>
+  <h1>CINE<span>VAULT</span></h1>
+  <div class="header-badge">CineVault by EFG</div>
+</header>
+
+<div class="container">
+  
+  <div class="sticky-player-area">
+    <div class="now-playing-label" id="nowPlayingLabel">Select a movie to play</div>
+
+    <div class="video-wrapper">
+      <video id="mainVideo" controls preload="metadata" controlslist="nodownload">
+        Your browser does not support the HTML5 video tag.
+      </video>
+    </div>
+
+    <div class="movie-info">
+      <div class="movie-info-left">
+        <h2 id="movieTitle">—</h2>
+        <div class="meta">
+          <span id="movieYear">—</span>
+          <span id="movieGenre" class="badge">—</span>
+          <span id="movieDesc">Select a movie from the playlist below</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"><span>Playlist</span></div>
+
+  <div class="playlist" id="playlist"></div>
+
+</div>
+
+<footer>Hosted on GitHub Pages · Video via EFG's cloud server</footer>
+
+<script>
+  const movies = [
+    {
+      title: "Avatar - Fire And Ash",
+      year: "2025",
+      genre: "Action, Fantasy, Epic",
+      desc: "Jake and Neytiri's family grapples with grief, encountering a new, aggressive Na'vi tribe, the Ash People.",
+      duration: "3H 17m",
+      url: "https://archive.org/download/avatar.-fire.-and.-ash.-2025/Avatar.Fire.And.Ash.2025.mp4"
+    },
+    {
+      title: "12 to to the moon",
+      year: "1960",
+      genre: "SciFi,Revival movie",
+      desc: "An international team embarks on an expedition to claim the moon, but they encounter aliens there who instruct them to leave.",
+      duration: "1h 14m",
+      url: "https://archive.org/download/12-to-the-moon/12%20to%20the%20Moon.mp4"
+    },
+    {
+      title: "Cold Storage",
+      year: "2026",
+      genre: "Horror,SciFi,comedy",
+      desc: "A futuristic look at life in isolation.",
+      duration: "1h 42m",
+      url: "https://archive.org/download/cold-storage-2026/Cold-Storage-2026.mkv"
+    },
+    {
+      title: "Dress to Kill",
+      year: "1946",
+      genre: "Classic Mystery",
+      desc: "A Sherlock Holmes classic where stolen music boxes hold a secret code.",
+      duration: "2h 31m",
+      url: "https://archive.org/download/dressed_to_kill/dressed_to_kill.mp4"
+    }
+  ];
+
+  const video = document.getElementById('mainVideo');
+  const playlist = document.getElementById('playlist');
+  const movieTitle = document.getElementById('movieTitle');
+  const movieYear = document.getElementById('movieYear');
+  const movieGenre = document.getElementById('movieGenre');
+  const movieDesc = document.getElementById('movieDesc');
+  const nowPlayingLabel = document.getElementById('nowPlayingLabel');
+
+  let activeIndex = -1;
+
+  function loadMovie(index) {
+    const m = movies[index];
+    activeIndex = index;
+
+    video.src = m.url;
+    video.load();
+    video.play();
+
+    movieTitle.textContent = m.title;
+    movieYear.textContent = m.year;
+    movieGenre.textContent = m.genre;
+    movieDesc.textContent = m.desc;
+    nowPlayingLabel.textContent = 'Now Playing';
+
+    document.querySelectorAll('.playlist-item').forEach((el, i) => {
+      el.classList.toggle('active', i === index);
+    });
+    
+    // Smooth scroll back to top of player when a new movie is selected
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  video.addEventListener('ended', () => {
+    const next = (activeIndex + 1) % movies.length;
+    loadMovie(next);
+  });
+
+  movies.forEach((m, i) => {
+    const item = document.createElement('div');
+    item.className = 'playlist-item';
+    item.innerHTML = `
+      <div class="item-num">${i + 1}</div>
+      <div class="play-icon">
+        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+      <div class="item-thumb-placeholder">
+        <svg viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+      </div>
+      <div class="item-info">
+        <div class="item-title">${m.title}</div>
+        <div class="item-meta">${m.year} · ${m.genre}</div>
+      </div>
+      <div class="item-duration">${m.duration}</div>
+    `;
+    item.addEventListener('click', () => loadMovie(i));
+    playlist.appendChild(item);
+  });
+</script>
+</body>
+</html>
